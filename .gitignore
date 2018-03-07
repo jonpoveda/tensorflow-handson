@@ -6,3 +6,6 @@ lib/
 *.egg
 .venv
 .env
+MNIST_data/
+.idea/
+/output/
