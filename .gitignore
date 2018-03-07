@@ -9,3 +9,5 @@ lib/
 MNIST_data/
 .idea/
 /output/
+tmp/
+
