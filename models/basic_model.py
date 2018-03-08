@@ -7,31 +7,31 @@ class BasicModel(BaseModel):
     def __init__(self):
         super(BasicModel, self).__init__()
 
-    def model_function(self, features, labels, mode):
+    def _model_function(self, features, labels, mode):
         """ Model function """
         # N samples of D values and H neurons per hidden layer
-        D = 32 * 32  # sample size
-        C = 10  # classes
-        H = 256  # units in hidden layers
+        sample_size = 32 * 32
+        n_classes = 10  # classes
+        hidden_size = 256  # units in hidden layers
 
         # Input layer
-        input_layer = tf.reshape(features['x'], [-1, D])
+        input_layer = tf.reshape(features['x'], [-1, sample_size])
 
         # Dense layers
         init = tf.contrib.layers.xavier_initializer()
         hidden = tf.layers.dense(inputs=input_layer,
-                                 units=H,
+                                 units=hidden_size,
                                  activation=tf.nn.relu,
                                  kernel_initializer=init)
 
         hidden2 = tf.layers.dense(inputs=hidden,
-                                  units=H,
+                                  units=hidden_size,
                                   activation=tf.nn.relu,
                                   kernel_initializer=init)
 
         # Logits Layer
         logits = tf.layers.dense(inputs=hidden2,
-                                 units=C)
+                                 units=n_classes)
 
         predictions = {
             'classes': tf.argmax(input=logits, axis=1, name='classes'),
@@ -44,7 +44,7 @@ class BasicModel(BaseModel):
 
         # Calculate loss
         one_hot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32),
-                                    depth=C)
+                                    depth=n_classes)
         loss = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_labels,
                                                logits=logits)
         # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels,
@@ -91,8 +91,9 @@ class BasicModel(BaseModel):
         tf.logging.set_verbosity(tf.logging.INFO)
 
         # Create estimator
-        mnist_classifier = tf.estimator.Estimator(model_fn=self.model_function,
-                                                  model_dir='tmp/mnist_basic_model')
+        mnist_classifier = tf.estimator.Estimator(
+            model_fn=self._model_function,
+            model_dir=f'tmp/mnist_{self.__class__.__name__}')
 
         # Train the model
         if num_epochs is None:
