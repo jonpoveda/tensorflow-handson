@@ -3,35 +3,64 @@ import tensorflow as tf
 from models.base_model import BaseModel
 
 
+# dropout= 0.5
+# with tf.variable_scope(scope, 'LeNet', [images]):
+#     net = end_points['conv1'] = slim.conv2d(images, 32, [5, 5], scope='conv1')
+#     net = end_points['pool1'] = slim.max_pool2d(net, [2, 2], 2, scope='pool1')
+#     net = end_points['conv2'] = slim.conv2d(net, 64, [5, 5], scope='conv2')
+#     net = end_points['pool2'] = slim.max_pool2d(net, [2, 2], 2, scope='pool2')
+#     net = slim.flatten(net)
+#     end_points['Flatten'] = net
+#
+#     net = end_points['fc3'] = slim.fully_connected(net, 1024, scope='fc3')
+#     if not num_classes:
+#         return net, end_points
+#     net = end_points['dropout3'] = slim.dropout(
+#         net, dropout_keep_prob, is_training=is_training, scope='dropout3')
+#     logits = end_points['Logits'] = slim.fully_connected(
+#         net, num_classes, activation_fn=None, scope='fc4')
+
 class LeNet(BaseModel):
     def __init__(self):
         super(LeNet, self).__init__()
 
-    def model_function(self, features, labels, mode):
+    def _model_function(self, features, labels, mode):
         """ Model function """
         # N samples of D values and H neurons per hidden layer
-        D = 32 * 32  # sample size
-        C = 10  # classes
-        H = 256  # units in hidden layers
+        width, height, channels = 32, 32, 1  # sample size
+        n_classes = 10  # classes
 
         # Input layer
-        input_layer = tf.reshape(features['x'], [-1, D])
+        input_layer = tf.reshape(features['x'], [-1, width, height, 1])
 
         # Dense layers
         init = tf.contrib.layers.xavier_initializer()
-        hidden = tf.layers.dense(inputs=input_layer,
-                                 units=H,
-                                 activation=tf.nn.relu,
-                                 kernel_initializer=init)
-
-        hidden2 = tf.layers.dense(inputs=hidden,
-                                  units=H,
-                                  activation=tf.nn.relu,
-                                  kernel_initializer=init)
-
-        # Logits Layer
-        logits = tf.layers.dense(inputs=hidden2,
-                                 units=C)
+        conv1 = tf.layers.conv2d(inputs=input_layer,
+                                 filters=32, kernel_size=[5, 5],
+                                 name='conv1')
+        pool1 = tf.layers.max_pooling2d(inputs=conv1,
+                                        pool_size=[2, 2], strides=2,
+                                        name='pool1')
+        conv2 = tf.layers.conv2d(inputs=pool1,
+                                 filters=64, kernel_size=[5, 5],
+                                 name='conv2')
+        pool2 = tf.layers.max_pooling2d(inputs=conv2,
+                                        pool_size=[2, 2], strides=2,
+                                        name='pool2')
+        flat = tf.layers.flatten(pool2)
+        fc3 = tf.layers.dense(inputs=flat,
+                              units=1024,
+                              activation=tf.nn.relu,
+                              kernel_initializer=init,
+                              name='fc3')
+        dropout3 = tf.layers.dropout(inputs=fc3,
+                                     rate=0.5,
+                                     training=bool(
+                                         mode == tf.estimator.ModeKeys.TRAIN),
+                                     name='dropout3')
+        logits = tf.layers.dense(inputs=dropout3,
+                                 units=10,
+                                 name='fc4')
 
         predictions = {
             'classes': tf.argmax(input=logits, axis=1, name='classes'),
@@ -44,7 +73,7 @@ class LeNet(BaseModel):
 
         # Calculate loss
         one_hot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32),
-                                    depth=C)
+                                    depth=n_classes)
         loss = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_labels,
                                                logits=logits)
         # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels,
@@ -91,8 +120,9 @@ class LeNet(BaseModel):
         tf.logging.set_verbosity(tf.logging.INFO)
 
         # Create estimator
-        mnist_classifier = tf.estimator.Estimator(model_fn=self.model_function,
-                                                  model_dir='tmp/mnist_basic_model')
+        mnist_classifier = tf.estimator.Estimator(
+            model_fn=self._model_function,
+            model_dir=f'tmp/mnist_{self.__class__.__name__}')
 
         # Train the model
         if num_epochs is None:
