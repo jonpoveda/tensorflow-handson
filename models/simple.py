@@ -3,9 +3,9 @@ import tensorflow as tf
 from models.base_model import BaseModel
 
 
-class BasicModel(BaseModel):
+class SimpleModel(BaseModel):
     def __init__(self):
-        super(BasicModel, self).__init__()
+        super(SimpleModel, self).__init__()
 
     def _model_function(self, features, labels, mode):
         """ Model function """
