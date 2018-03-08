@@ -1,22 +1,6 @@
-""" Implementation following TF doc """
-
 import tensorflow as tf
 
-import utils_mnist
-
-
-class BaseModel(object):
-    def __init__(self):
-        pass
-
-    def model_function(self, features, labels, mode):
-        pass
-
-    def train_and_evaluate(self, data,
-                           batch_size=100,
-                           num_epochs=None,
-                           steps=None):
-        pass
+from models.base_model import BaseModel
 
 
 class BasicModel(BaseModel):
@@ -139,14 +123,3 @@ class BasicModel(BaseModel):
             shuffle=False)
 
         return mnist_classifier.evaluate(input_fn=eval_input_fn)
-
-
-if __name__ == '__main__':
-    dataset = utils_mnist.load_mnist_32x32()
-    model = BasicModel()
-
-    eval_results = model.train_and_evaluate(data=dataset,
-                                            batch_size=550,
-                                            num_epochs=2,
-                                            steps=None)
-    print(eval_results)
