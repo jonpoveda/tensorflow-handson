@@ -1,24 +1,10 @@
+# -*- coding: utf-8 -*-
+""" Implementation of NN based on LeNet using `tf.estimator.Estimator` """
+
 import tensorflow as tf
 
 from models.base_model import BaseModel
 
-
-# dropout= 0.5
-# with tf.variable_scope(scope, 'LeNet', [images]):
-#     net = end_points['conv1'] = slim.conv2d(images, 32, [5, 5], scope='conv1')
-#     net = end_points['pool1'] = slim.max_pool2d(net, [2, 2], 2, scope='pool1')
-#     net = end_points['conv2'] = slim.conv2d(net, 64, [5, 5], scope='conv2')
-#     net = end_points['pool2'] = slim.max_pool2d(net, [2, 2], 2, scope='pool2')
-#     net = slim.flatten(net)
-#     end_points['Flatten'] = net
-#
-#     net = end_points['fc3'] = slim.fully_connected(net, 1024, scope='fc3')
-#     if not num_classes:
-#         return net, end_points
-#     net = end_points['dropout3'] = slim.dropout(
-#         net, dropout_keep_prob, is_training=is_training, scope='dropout3')
-#     logits = end_points['Logits'] = slim.fully_connected(
-#         net, num_classes, activation_fn=None, scope='fc4')
 
 class LeNet(BaseModel):
     def __init__(self):
@@ -107,7 +93,7 @@ class LeNet(BaseModel):
             batch_size: number of images to do one gradient update
             num_epochs: number of epochs to run, if `None` a number of steps are
                 computed to run the equivalent to one epoch
-            steps: number of steps to run,
+            steps: number of steps to run
         """
         if (num_epochs is None and steps is None) or \
             (num_epochs is not None and steps is not None):

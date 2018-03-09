@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Implementation of a simple neural network using `tf.estimator.Estimator`
+"""
+
 import tensorflow as tf
 
 from models.base_model import BaseModel

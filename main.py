@@ -1,16 +1,21 @@
-""" Implementation following TF doc """
+# -*- coding: utf-8 -*-
+""" Trains and assess a neural network """
 
 import utils_mnist
-from models.simple import SimpleModel
-from models.lenet import LeNet
+from models.simple0 import Simple0
 
-if __name__ == '__main__':
+
+def main():
     dataset = utils_mnist.load_mnist_32x32()
-    model = SimpleModel()
+    model = Simple0()
+    # model = SimpleModel()
     # model = LeNet()
 
-    eval_results = model.train_and_evaluate(data=dataset,
-                                            batch_size=550,
-                                            num_epochs=4,
-                                            steps=None)
-    print(eval_results)
+    model.train_and_evaluate(data=dataset,
+                             batch_size=550,
+                             num_epochs=40,
+                             steps=None)
+
+
+if __name__ == '__main__':
+    main()
