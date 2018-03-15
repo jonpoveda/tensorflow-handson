@@ -76,8 +76,10 @@ class LeNet(BaseModel):
         # Add evaluation metrics
         eval_metric_ops = {
             'accuracy': tf.metrics.accuracy(labels=labels,
-                                            predictions=predictions['classes'])
+                                            predictions=predictions['classes'],
+                                            name='accuracy')
         }
+
         return tf.estimator.EstimatorSpec(mode=mode,
                                           loss=loss,
                                           eval_metric_ops=eval_metric_ops)
@@ -102,11 +104,15 @@ class LeNet(BaseModel):
             steps = data.train.images.shape[0] // batch_size + 1
 
         tf.logging.set_verbosity(tf.logging.INFO)
+        tensors_to_log = {'probabilities': 'softmax_tensor',
+                          'accuracy': 'accuracy'}
+        logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log,
+                                                  every_n_iter=50)
 
         # Create estimator
         mnist_classifier = tf.estimator.Estimator(
             model_fn=self._model_function,
-            model_dir=f'tmp/mnist_{self.__class__.__name__}')
+            model_dir='tmp/mnist_{}'.format(self.__class__.__name__))
 
         # Train the model
         if num_epochs is None:
@@ -117,7 +123,7 @@ class LeNet(BaseModel):
                 shuffle=True)
 
             mnist_classifier.train(input_fn=train_input_fn,
-                                   steps=steps)
+                                   steps=steps ) #, hooks=[logging_hook])
 
         else:
             train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -127,7 +133,7 @@ class LeNet(BaseModel):
                 num_epochs=num_epochs,
                 shuffle=True)
 
-            mnist_classifier.train(input_fn=train_input_fn)
+            mnist_classifier.train(input_fn=train_input_fn)  #, hooks=[logging_hook])
 
         # Evaluate model
         eval_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -136,4 +142,5 @@ class LeNet(BaseModel):
             num_epochs=1,
             shuffle=False)
 
-        return mnist_classifier.evaluate(input_fn=eval_input_fn)
+        return mnist_classifier.evaluate(input_fn=eval_input_fn,
+                                         hooks=[logging_hook])
