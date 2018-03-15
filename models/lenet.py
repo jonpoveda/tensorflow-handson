@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Implementation of NN based on LeNet using `tf.estimator.Estimator` """
+""" Implementation of NN based on LeNet with `tf.estimator.Estimator` """
 
 import tensorflow as tf
 
@@ -62,8 +62,6 @@ class LeNet(BaseModel):
                                     depth=n_classes)
         loss = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_labels,
                                                logits=logits)
-        # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels,
-        #                                        logits=logits)
 
         # Config training
         if mode == tf.estimator.ModeKeys.TRAIN:

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Implementation of a simple neural network using `tf.estimator.Estimator`
-"""
+""" Implementation of a simple neural network with `tf.estimator.Estimator` """
 
 import tensorflow as tf
 
