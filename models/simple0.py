@@ -76,13 +76,17 @@ class Simple0(BaseModel):
             tf.variables_initializer(var_list=running_vars)
 
         # Log metrics
-        summary_op_train = tf.summary.scalar('loss', loss)
-        summary_op_test = tf.summary.scalar('accuracy', accuracy)
-        summary_op = tf.summary.merge_all()
+        summary_op_train = tf.summary.scalar(name='loss', tensor=loss)
+        summary_op_test = tf.summary.scalar(name='accuracy', tensor=accuracy)
+        # summary_op = tf.summary.merge_all()
 
         # Logging writer
-        writer = tf.summary.FileWriter(
-            f'tmp/{self.__class__.__name__}/tensorboard',
+        writer_train = tf.summary.FileWriter(
+            f'tmp/{self.__class__.__name__}/tensorboard/train',
+            graph=tf.get_default_graph())
+
+        writer_test = tf.summary.FileWriter(
+            f'tmp/{self.__class__.__name__}/tensorboard/test',
             graph=tf.get_default_graph())
 
         with tf.Session() as sess:
@@ -126,16 +130,70 @@ class Simple0(BaseModel):
                         values = {input_data: batch_data,
                                   input_labels: batch_labels}
 
-                        _, metric, summary = sess.run(
+                        _, metric_loss, summary_train = sess.run(
                             [update_operation, loss, summary_op_train],
                             feed_dict=values)
-                        writer.add_summary(summary, i)
+                        writer_train.add_summary(summary_train, i)
                         i += 1
-                        loss_function.append(metric)
+                        loss_function.append(metric_loss)
 
-                    print(f'Epoch: {epoch}, loss: {metric}')
+                    summary_test, accu = test_in_train(
+                        samples=mnist.test.images,
+                        labels=mnist.test.labels,
+                        batch_size=batch_size,
+                        n_samples=-1)
 
+                    writer_test.add_summary(summary_test, i)
+                    print(f'Epoch: {epoch}, '
+                          f'loss: {metric_loss}, '
+                          f'accuracy: {accu}')
                 return loss_function
+
+            def test_in_train(samples: np.ndarray,
+                              labels: np.ndarray,
+                              batch_size: int = 5500,
+                              n_samples: int = -1) -> np.float32:
+                """ Test the model
+
+                Args:
+                    samples: input data (images)
+                    labels: input labels
+                    n_samples: how many samples use to run a test, '-1' means
+                        use all available
+                    batch_size: test in batches (does not affect on the global
+                        metrics)
+
+                Returns:
+                    summary with accuracy
+                """
+                n_batches = n_samples // batch_size
+                if n_samples == -1:
+                    n_batches = samples.shape[0] // batch_size
+
+                for batch_num in range(n_batches):
+                    batch_data: np.ndarray = samples[
+                                             batch_num * batch_size:
+                                             (batch_num + 1) * batch_size]
+
+                    batch_labels = labels[batch_num * batch_size:
+                                          (batch_num + 1) * batch_size]
+
+                    # Reshape input data to 1D-vector
+                    batch_data = np.reshape(batch_data,
+                                            (batch_size, 32 * 32))
+
+                    values = {input_data: batch_data,
+                              input_labels: batch_labels}
+
+                    _, metric, summary = sess.run([accuracy_update_op,
+                                                   accuracy,
+                                                   summary_op_test],
+                                                  feed_dict=values)
+                # _, metric, summary = sess.run([summary_op_test])
+                metric, summary = sess.run([accuracy, summary_op_test])
+                return summary, metric
+                # writer.add_summary(summary, 1)
+                # return metric
 
             def test(samples: np.ndarray,
                      labels: np.ndarray,
@@ -157,9 +215,9 @@ class Simple0(BaseModel):
 
                 i = 0
                 for batch_num in range(n_batches):
-                    batch_data: np.ndarray = samples[batch_num * batch_size:
-                                                     (
-                                                         batch_num + 1) * batch_size]
+                    batch_data: np.ndarray = samples[
+                                             batch_num * batch_size:
+                                             (batch_num + 1) * batch_size]
 
                     batch_labels = labels[batch_num * batch_size:
                                           (batch_num + 1) * batch_size]
@@ -175,7 +233,7 @@ class Simple0(BaseModel):
                                                    accuracy,
                                                    summary_op_test],
                                                   feed_dict=values)
-                    writer.add_summary(summary, i)
+                    writer_test.add_summary(summary, i)
                     i += 1
 
                 print(f'Final accuracy: {metric}')
@@ -190,11 +248,3 @@ class Simple0(BaseModel):
             plt.figure('Training loss')
             plt.plot(loss_function)
             plt.savefig('task2_train_loss.png')
-
-            test_labels = mnist.test.labels
-            acc = test(samples=mnist.test.images,
-                       labels=test_labels,
-                       batch_size=batch_size,
-                       n_samples=-1)
-
-            print(f'Accuracy in test: {acc}')
